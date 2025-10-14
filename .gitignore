@@ -1,0 +1,143 @@
+# SilverSupport .gitignore
+
+# Release artifacts
+releases/
+*.tar.gz
+*.tar.gz.sha256
+*.zip
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+/var/log/
+/var/silver/logs/
+
+# Build outputs
+dist/
+build/
+out/
+*.min.js
+*.min.css
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.project
+.classpath
+.settings/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa*
+*.p12
+secrets/
+credentials/
+
+# AWS
+.aws/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+/var/lib/postgresql/
+
+# Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Test artifacts
+test-results/
+.pytest_cache/
+
+# Local configuration
+local.conf
+local.json
+
+# Installation logs
+/var/log/silver-install.log
+
+# PM2
+.pm2/
+pm2.log
+
+# Certificates
+*.pem
+*.csr
+
+# Backup files
+*.backup
+backup/
+backups/
+
+# Compiled binaries
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Mac specific
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows specific
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific
+.directory
+.Trash-*
+
+# Editor backups
+*~
+\#*\#
+.#*
+
+# Sensitive documentation
+PRIVATE.md
+TODO-private.md
+
+# Local testing
+test-server/
+scratch/
