@@ -11,7 +11,8 @@ set -e  # Exit on any error
 
 INSTALLER_VERSION="1.0.0"
 ENVIRONMENT="alpha"
-S3_BUCKET="ai-support-installer-793bc413"
+## S3_BUCKET="ai-support-installer-793bc413"
+RELEASE_URL="https://releases.silverzupport.us"
 TARBALL_NAME="silversupport-alpha-latest.tar.gz"
 LOG_FILE="/var/log/silver-install.log"
 SETUP_PORT="9443"
@@ -354,10 +355,12 @@ create_directories() {
 download_application() {
     print_step "Downloading SilverSupport application from S3"
     
-    echo "Downloading: s3://${S3_BUCKET}/releases/${TARBALL_NAME}"
-    
+    ## echo "Downloading: s3://${S3_BUCKET}/releases/${TARBALL_NAME}"
+    echo "Downloading: ${RELEASE_URL}/${TARBALL_NAME}"
+
     # Download tarball from S3
-    if ! aws s3 cp "s3://${S3_BUCKET}/releases/${TARBALL_NAME}" "/tmp/${TARBALL_NAME}"; then
+    if ! wget -q "${RELEASE_URL}/${TARBALL_NAME}" -O "/tmp/${TARBALL_NAME}"; then
+    ## if ! aws s3 cp "s3://${S3_BUCKET}/releases/${TARBALL_NAME}" "/tmp/${TARBALL_NAME}"; then
         print_error "Failed to download application from S3"
         echo ""
         echo "Bucket: $S3_BUCKET"
