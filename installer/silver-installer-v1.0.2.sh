@@ -118,9 +118,30 @@ select_environment() {
     echo "2) Staging (Pre-production)"
     echo "3) Production"
     echo ""
+
+    # Check if we have an interactive terminal
+    if [ ! -t 0 ]; then
+        echo -e "${RED}Error: No interactive terminal detected${NC}"
+        echo "This installer must be run interactively, not piped from curl."
+        echo ""
+        echo "Please run:"
+        echo "  wget https://install.silverzupport.us/latest -O install.sh"
+        echo "  sudo bash install.sh"
+        exit 1
+    fi
+
+    local attempts=0
+    local max_attempts=5
     
     while true; do
-        read -p "Enter choice [1-3]: " env_choice
+        read -r -p "Enter choice [1-3]: " env_choice
+        
+        # Check if read was successful
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Error: Failed to read input${NC}"
+            exit 1
+        fi
+        
         case $env_choice in
             1)
                 ENVIRONMENT="alpha"
@@ -138,14 +159,23 @@ select_environment() {
                 break
                 ;;
             *)
+                attempts=$((attempts + 1))
+                if [ $attempts -ge $max_attempts ]; then
+                    echo -e "${RED}Error: Too many invalid attempts${NC}"
+                    exit 1
+                fi
                 echo -e "${RED}Invalid choice. Please enter 1, 2, or 3.${NC}"
                 ;;
         esac
     done
-    
+
     echo -e "${GREEN}✓ Environment: $ENVIRONMENT${NC}"
     echo -e "${GREEN}✓ Domain: $DOMAIN${NC}"
 }
+
+
+
+
 
 # Install system dependencies
 install_dependencies() {
