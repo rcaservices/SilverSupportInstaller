@@ -190,18 +190,42 @@ Before updating and uploading the installer, ensure you have:
    aws configure
    ```
 
-2. **CRITICAL: Set up environment variables in your Mac's ~/.zshrc file**
+2. **CRITICAL: AWS Profile Configuration**
+   
+   **IMPORTANT:** All AWS commands for SilverSupport releases and install buckets **MUST use the `jenkins` profile**.
+   
+   **Configure the jenkins profile:**
+   ```bash
+   # Configure the jenkins profile (one-time setup)
+   aws configure --profile jenkins
+   # Enter AWS Access Key ID for jenkins user
+   # Enter AWS Secret Access Key for jenkins user
+   # Default region: us-east-1
+   # Default output: json
+   ```
+   
+   **Verify the profile works:**
+   ```bash
+   # Test access with jenkins profile
+   aws s3 ls s3://silversupport-releases/ --profile jenkins
+   aws s3 ls s3://silversupport-install/ --profile jenkins
+   ```
+
+3. **CRITICAL: Set up environment variables in your Mac's ~/.zshrc file**
    
    Add these lines to your `~/.zshrc` (or `~/.bash_profile` if using bash):
    ```bash
    # SilverSupport AWS Configuration
+   export AWS_PROFILE=jenkins
    export CLOUDFRONT_INSTALL_ID="your-install-distribution-id"
    export CLOUDFRONT_RELEASES_ID="your-releases-distribution-id"
    ```
    
    **To find your CloudFront Distribution IDs:**
    ```bash
-   aws cloudfront list-distributions --query 'DistributionList.Items[*].[Id,Origins.Items[0].DomainName,DomainName]' --output table
+   aws cloudfront list-distributions --profile jenkins \
+     --query 'DistributionList.Items[*].[Id,Origins.Items[0].DomainName,DomainName]' \
+     --output table
    ```
    
    **After adding to ~/.zshrc, reload it:**
@@ -209,12 +233,22 @@ Before updating and uploading the installer, ensure you have:
    source ~/.zshrc
    ```
    
-   **Why this is critical:** Without these environment variables, CloudFront will cache old versions of your VERSION files, causing installers to download the wrong application version. This is the #1 source of "wrong version being installed" problems.
+   **Verify everything is set:**
+   ```bash
+   echo $AWS_PROFILE          # Should show: jenkins
+   echo $CLOUDFRONT_INSTALL_ID
+   echo $CLOUDFRONT_RELEASES_ID
+   ```
+   
+   **Why this is critical:** 
+   - Without the `jenkins` profile, commands will fail with "Access Denied"
+   - Without CloudFront IDs, cache won't be invalidated
+   - Old cached versions will be downloaded, causing wrong version installations
 
-3. **Git repository access** to the SilverSupport project
+4. **Git repository access** to the SilverSupport project
 
-4. **Proper AWS credentials** with permissions for:
-   - S3 bucket read/write access
+5. **Proper AWS credentials** for the jenkins profile with permissions for:
+   - S3 bucket read/write access on `silversupport-releases` and `silversupport-install`
    - CloudFront cache invalidation (required, not optional!)
 
 ---
