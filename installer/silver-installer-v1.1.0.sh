@@ -215,21 +215,173 @@ create_directories() {
 #############################################
 
 download_code() {
-    echo -e "${YELLOW}Cloning SilverSupport repository...${NC}"
+    echo -e "${YELLOW}Downloading SilverSupport code...${NC}"
     
     cd /opt
     
-    # Clone from GitHub (update with your actual repo URL)
-    if [ -d "silversupport" ]; then
-        rm -rf silversupport
+    # Remove existing directory if it exists
+    if [ -d "$SILVER_ROOT" ]; then
+        rm -rf "$SILVER_ROOT"
     fi
     
-    git clone https://github.com/YOUR_USERNAME/silversupport.git "$SILVER_ROOT" || {
-        echo -e "${YELLOW}Note: Using local files for testing${NC}"
-        mkdir -p "$SILVER_ROOT"
-    }
+    # Check for GitHub credentials in environment variables
+    # Can be set via: export GITHUB_TOKEN="ghp_xxxxx" before running installer
+    if [ -n "$GITHUB_TOKEN" ]; then
+        echo -e "${CYAN}Using GitHub Personal Access Token from environment${NC}"
+        REPO_URL="https://${GITHUB_TOKEN}@github.com/rcaservices/SilverSupportDevRepo.git"
+        
+        if git clone "$REPO_URL" "$SILVER_ROOT" 2>/dev/null; then
+            echo -e "${GREEN}✓ Code downloaded from private repository${NC}"
+            return
+        else
+            echo -e "${YELLOW}⚠ Clone with token failed${NC}"
+        fi
+    fi
     
-    echo -e "${GREEN}✓ Code downloaded${NC}"
+    # Try SSH if SSH key is available
+    if [ -f "$HOME/.ssh/id_rsa" ] || [ -f "$HOME/.ssh/id_ed25519" ]; then
+        echo -e "${CYAN}Attempting SSH clone...${NC}"
+        REPO_URL="git@github.com:rcaservices/SilverSupportDevRepo.git"
+        
+        # Disable strict host key checking for GitHub
+        GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+        git clone "$REPO_URL" "$SILVER_ROOT" 2>/dev/null
+        
+        if [ -d "$SILVER_ROOT/.git" ]; then
+            echo -e "${GREEN}✓ Code downloaded via SSH${NC}"
+            return
+        else
+            echo -e "${YELLOW}⚠ SSH clone failed${NC}"
+        fi
+    fi
+    
+    # If both methods failed, create placeholder and provide instructions
+    echo -e "${YELLOW}⚠ Unable to clone repository automatically${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}To deploy your application, choose one of these methods:${NC}"
+    echo ""
+    echo -e "${YELLOW}Method 1: GitHub Personal Access Token (Recommended)${NC}"
+    echo -e "  1. Create token at: https://github.com/settings/tokens"
+    echo -e "  2. Set environment variable: export GITHUB_TOKEN='ghp_xxxxx'"
+    echo -e "  3. Clone: git clone https://\$GITHUB_TOKEN@github.com/rcaservices/SilverSupportDevRepo.git $SILVER_ROOT"
+    echo ""
+    echo -e "${YELLOW}Method 2: SSH Key${NC}"
+    echo -e "  1. Generate SSH key: ssh-keygen -t ed25519 -C 'your_email@example.com'"
+    echo -e "  2. Add to GitHub: https://github.com/settings/keys"
+    echo -e "  3. Clone: git clone git@github.com:rcaservices/SilverSupportDevRepo.git $SILVER_ROOT"
+    echo ""
+    echo -e "${YELLOW}Method 3: Manual Upload${NC}"
+    echo -e "  1. Build your app locally"
+    echo -e "  2. SCP to server: scp -r ./dist root@$SERVER_IP:$SILVER_ROOT/"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    
+    # Create placeholder structure
+    echo -e "${CYAN}Creating placeholder structure...${NC}"
+    mkdir -p "$SILVER_ROOT"/{admin-dashboard/dist,logs}
+    
+    # Create minimal Express server
+    cat > "$SILVER_ROOT/server.js" << 'EOFSERVER'
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        message: 'SilverSupport infrastructure ready - deploy your application',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/', (req, res) => {
+    res.send(`
+        <h1>SilverSupport - Deployment Pending</h1>
+        <p>Infrastructure is ready. Deploy your application to get started.</p>
+        <p><a href="/health">Health Check</a></p>
+    `);
+});
+
+app.listen(PORT, () => {
+    console.log(\`Placeholder server running on port \${PORT}\`);
+    console.log('Deploy your application to replace this placeholder');
+});
+EOFSERVER
+    
+    cat > "$SILVER_ROOT/package.json" << 'EOFPKG'
+{
+  "name": "silversupport",
+  "version": "1.0.0",
+  "description": "SilverSupport - Patient Tech Support for Seniors",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+EOFPKG
+    
+    # Create simple admin dashboard placeholder
+    mkdir -p "$SILVER_ROOT/admin-dashboard/dist"
+    cat > "$SILVER_ROOT/admin-dashboard/dist/index.html" << 'EOFHTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverSupport - Deploy Application</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; }
+        .status { 
+            padding: 15px; 
+            background: #fff3cd; 
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ SilverSupport</h1>
+        <div class="status">
+            <strong>Status:</strong> Infrastructure Ready - Application Deployment Pending
+        </div>
+        <h2>Next Steps</h2>
+        <ol>
+            <li>Deploy your application code to <code>/opt/silversupport</code></li>
+            <li>Install dependencies: <code>cd /opt/silversupport && npm install</code></li>
+            <li>Start with PM2: <code>pm2 start server.js --name silversupport</code></li>
+            <li>Save PM2 config: <code>pm2 save</code></li>
+        </ol>
+        <p>See installation log: <code>/var/log/silver-install.log</code></p>
+    </div>
+</body>
+</html>
+EOFHTML
+    
+    echo -e "${GREEN}✓ Placeholder structure created${NC}"
+    echo -e "${CYAN}  Deploy your application to: ${SILVER_ROOT}${NC}"
 }
 
 configure_database() {
@@ -385,6 +537,19 @@ install_ssl() {
     if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo -e "${YELLOW}⚠ Skipping SSL (using IP address)${NC}"
         echo -e "${YELLOW}  Access via: http://${DOMAIN}/admin/${NC}"
+        return
+    fi
+    
+    # Check if domain points to this server
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    DOMAIN_IP=$(dig +short "$DOMAIN" @8.8.8.8 | tail -1)
+    
+    if [ "$DOMAIN_IP" != "$SERVER_IP" ]; then
+        echo -e "${YELLOW}⚠ DNS mismatch detected${NC}"
+        echo -e "${YELLOW}  Domain $DOMAIN points to: $DOMAIN_IP${NC}"
+        echo -e "${YELLOW}  This server IP: $SERVER_IP${NC}"
+        echo -e "${YELLOW}  Please update your DNS records before installing SSL${NC}"
+        echo -e "${YELLOW}  You can install SSL later with: certbot --nginx -d $DOMAIN${NC}"
         return
     fi
     
